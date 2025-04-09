@@ -3,8 +3,7 @@ import isoFns as iso
 
 md = []
 name = ["0.5mass", "0.7mass", "0.9mass", "1mass", "1.2mass", "1.4mass", 
-        "1.6mass"
-        , "1.8mass", "2mass", "2.2mass", "2.4mass", "2.6mass", "3mass", "4mass", 
+        "1.6mass", "1.8mass", "2mass", "2.2mass", "2.4mass", "2.6mass", "3mass", "4mass", 
         "5mass", "6mass", "7mass", "8mass", "9mass", "10mass"]
 
 desired_age = 2e9
