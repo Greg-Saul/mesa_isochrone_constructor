@@ -23,3 +23,10 @@ iso.isochrone(md, 3.16e9, 'blue')
 iso.isochrone(md, 1e10, 'purple')
 iso.show_plot()
 ```
+
+### functions
+```
+iso.hr(MesaData) # takes the MesaData data structure to create hr diagram
+iso.isochrone(MesaData, year, color) # takes the MesaData data structure to create an isochrone at a chosen year and color
+iso.show_plot() # this shows the plot after iso.hr and/or iso.isochrone has been called
+```
