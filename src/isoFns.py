@@ -1,106 +1,113 @@
-
 import matplotlib
 import tkinter as tk
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt 
-from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
-from scipy.interpolate import Rbf
 import numpy as np
 import os
 
-fig, ax = plt.subplots(figsize=(12, 8))
+matplotlib.use('TkAgg')
 
-def hr(md):
-  lum = []
-  tmp = []
-  masses = []
-  ages = []
-  ages_len = []
-  file = []
-
-  for i in range(len(md)):
-    lum.append(md[i].data('log_L'))
-    tmp.append(md[i].data('log_Teff'))
-    masses.append(md[i].star_mass[0])
-    ages.append(md[i].star_age)
-    ages_len.append(len(md[i].star_age))
-    file.append(os.path.basename(md[i].file_name))
-  
-  # print(file)
-  min_age_length = min(ages_len)
-
-
-  for i in range(len(md)):
-    tmp[i] = tmp[i][:min_age_length]
-    lum[i] = lum[i][:min_age_length]
-    plt.plot(tmp[i], lum[i], linewidth=2, label=f'{file[i]}')
-
-def isochrone(md, desired_age, custom_color):
-  lum = []
-  tmp = []
-  masses = []
-  ages = []
-  ages_len = []
-  newtmp = []
-  newlogL = []
-  file = []
-
-  for i in range(len(md)):
-    lum.append(md[i].data('log_L'))
-    tmp.append(md[i].data('log_Teff'))
-    masses.append(md[i].star_mass[0])
-    ages.append(md[i].star_age)
-    ages_len.append(len(md[i].star_age))
-    file.append(os.path.basename(md[i].file_name))
-
-    min_age_length = min(ages_len)
-
-  for i in range(len(md)):
-    indices = find_indices(ages[i], desired_age)
-
-    if(indices[2] < 50):
-      newtmp.append(tmp[i][indices[1]])
-      newlogL.append(lum[i][indices[1]])
-      # generally leave this commented out
-      plt.plot(tmp[i], lum[i], color='grey')
-  
-  # print(newtmp)
-
-  t = np.arange(len(newtmp))
-  t_fine = np.linspace(0, len(newtmp) - 1, 200)
-
-  cs_tmp = CubicSpline(t, newtmp)
-  cs_lum = CubicSpline(t, newlogL)
-
-  tmp_smooth = cs_tmp(t_fine)
-  lum_smooth = cs_lum(t_fine)
-
-  plt.plot(tmp_smooth, lum_smooth, linestyle='--', color=custom_color, label=f'Isochrone {desired_age}')
-
-  plt.plot(newtmp, newlogL, 'ko')
-
-  # for i in range(len(newlogL) - 1):
-  #   if newtmp[i] > newtmp[i + 1]:
-  #     f = CubicSpline([newtmp[i + 1], newtmp[i]], [newlogL[i + 1], newlogL[i]])
-  #   else:
-  #     f = CubicSpline([newtmp[i], newtmp[i + 1]], [newlogL[i], newlogL[i + 1]])
-  #   x = np.linspace(min([newtmp[i], newtmp[i + 1]]), max([newtmp[i], newtmp[i + 1]]), 100)
-
-  #   plt.plot(x, f(x), 'k--', color=f'{custom_color}', label=f'{desired_age}')
-
-
-def show_plot():
-  ax.invert_xaxis()
-  plt.ylabel('Log Luminosity', fontsize=14)
-  plt.xlabel('Log Effective Temperature', fontsize=14)
-  plt.title('Luminosity vs. Temperature', fontsize=16)
-  plt.legend(loc="lower left", fontsize=10)
-  plt.grid(True, linestyle='--', alpha=0.7)
-  plt.show()
-
-def find_indices(arr, desired_year):
-    inx = (np.abs(arr-desired_year)).argmin()
-    percent_error = 100 * abs(arr[inx] - desired_year) / desired_year
-    # print(percent_error, inx)
-    return arr[inx], inx, percent_error
+class isoFns:
+    def __init__(self, figsize=(12, 8)):
+        """Initialize the HR Diagram plotter"""
+        self.fig, self.ax = plt.subplots(figsize=figsize)
+        self.models = None
+        self.min_age_length = None
+    
+    def load_models(self, model_data):
+        """Load stellar evolution models"""
+        self.models = model_data
+        self._extract_model_properties()
+    
+    def _extract_model_properties(self):
+        """Extract common properties from all models"""
+        self.luminosities = []
+        self.temperatures = []
+        self.masses = []
+        self.ages = []
+        self.age_lengths = []
+        self.filenames = []
+        
+        for model in self.models:
+            self.luminosities.append(model.data('log_L'))
+            self.temperatures.append(model.data('log_Teff'))
+            self.masses.append(model.star_mass[0])
+            self.ages.append(model.star_age)
+            self.age_lengths.append(len(model.star_age))
+            self.filenames.append(os.path.basename(model.file_name))
+        
+        self.min_age_length = min(self.age_lengths)
+        
+        # Trim all arrays to minimum age length
+        # for i in range(len(self.models)):
+        #     self.temperatures[i] = self.temperatures[i][:self.min_age_length]
+        #     self.luminosities[i] = self.luminosities[i][:self.min_age_length]
+    
+    def plot_evolutionary_tracks(self):
+        """Plot the evolutionary tracks for all loaded models"""
+        if not self.models:
+            raise ValueError("No models loaded. Call load_models() first.")
+            
+        for i in range(len(self.models)):
+            self.ax.plot(self.temperatures[i], 
+                        self.luminosities[i], 
+                        linewidth=2, 
+                        label=f'{self.filenames[i]}')
+    
+    def plot_isochrone(self, desired_age, custom_color):
+        """Plot an isochrone for the specified age"""
+        if not self.models:
+            raise ValueError("No models loaded. Call load_models() first.")
+            
+        new_temps = []
+        new_lums = []
+        
+        for i in range(len(self.models)):
+            indices = self._find_closest_age_index(self.ages[i], desired_age)
+            
+            if indices[2] < 10:  # Only use if error < 10%
+                new_temps.append(self.temperatures[i][indices[1]])
+                new_lums.append(self.luminosities[i][indices[1]])
+                # Plot evolutionary track in grey for reference
+                # Will change to make optional
+                self.ax.plot(self.temperatures[i], 
+                             self.luminosities[i], 
+                             color='grey')
+        
+        # Create smooth isochrone using cubic spline
+        # Uses a parametric interpolation method to combat nonmonoticity
+        t = np.arange(len(new_temps))
+        t_fine = np.linspace(0, len(new_temps) - 1, 200)
+        
+        cs_temp = CubicSpline(t, new_temps)
+        cs_lum = CubicSpline(t, new_lums)
+        
+        temp_smooth = cs_temp(t_fine)
+        lum_smooth = cs_lum(t_fine)
+        
+        # Plot the isochrone
+        self.ax.plot(temp_smooth, 
+                     lum_smooth, 
+                     linestyle='--', 
+                     color=custom_color, 
+                     label=f'Isochrone {desired_age}')
+        
+        # Plot the original points
+        self.ax.plot(new_temps, new_lums, 'ko')
+    
+    def show(self):
+        """Display the HR diagram with proper formatting"""
+        self.ax.invert_xaxis()
+        self.ax.set_ylabel('Log Luminosity', fontsize=14)
+        self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
+        self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
+        self.ax.legend(loc="lower left", fontsize=10)
+        self.ax.grid(True, linestyle='--', alpha=0.7)
+        plt.show()
+    
+    @staticmethod
+    def _find_closest_age_index(age_array, desired_age):
+        """Find the index in age_array closest to desired_age"""
+        idx = (np.abs(age_array - desired_age)).argmin()
+        percent_error = 100 * abs(age_array[idx] - desired_age) / desired_age
+        return age_array[idx], idx, percent_error
