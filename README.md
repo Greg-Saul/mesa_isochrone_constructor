@@ -1,32 +1,35 @@
 # py_mesa_interpolation
 
+```py_mesa_interpolation``` is a tool that is designed to be used with [py_mesa_reader](https://github.com/wmwolf/py_mesa_reader) and [MESA stellar astrophysics program](https://docs.mesastar.org/en/latest/) to create isochrone plots over multiple tracks.
+
 ### functions:
 ```
-iso.hr(MesaData) # takes the an array of MesaData data structures to create hr diagram
-iso.isochrone(MesaData, year, color) #  takes the an array of MesaData data structures to create an<br>
-isochrone at a chosen year and color
-iso.show_plot() # this shows the plot after iso.hr and/or iso.isochrone has been called
+load_models(mesa_data) # takes a 2d array of mesa data
+plot_isochrone(desired_age, color) # plots an isochrone of a desired year over a hr diagram
+plot_evolutionary_tracks() # plots a colorful hr diagram
+show() # shows the plot that has been created
 ```
 
-### sample usage of isoFns.py:
+### Sample usage
 ```
 from mesa_reader import MesaData
-import isoFns as iso
+from isoFns import isoFns
 
+# Initialize and load data
+plotter = isoFns()
 md = []
 name = ["0.5mass", "0.7mass", "0.9mass", "1mass", "1.2mass", "1.4mass", 
-        "1.6mass", "1.8mass", "2mass", "2.2mass", "2.4mass", "2.6mass", "3mass", "4mass", 
-        "5mass", "6mass", "7mass", "8mass", "9mass", "10mass"]
+        "1.6mass", "1.8mass", "2mass", "2.2mass", "2.4mass", "2.6mass", 
+        "3mass", "4mass", "5mass", "6mass", "7mass", "8mass", "9mass", "10mass"]
 
+for n in name:
+    md.append(MesaData('path/to/mesa/data/' + n + '.data'))
 
-for i in range(len(name)):
-  md.append(MesaData('gregsWork/work/LOGS/' + name[i] + '.data'))
+plotter.load_models(md)
 
-iso.hr(md)
-iso.isochrone(md, 1e8, 'red')
-iso.isochrone(md, 3.16e8, 'orange')
-iso.isochrone(md, 1e9, 'green')
-iso.isochrone(md, 3.16e9, 'blue')
-iso.isochrone(md, 1e10, 'purple')
-iso.show_plot()
+# Add isochrones
+plotter.plot_isochrone(1e9, 'green')
+
+# Show plot
+plotter.show()
 ```
