@@ -7,7 +7,7 @@ import os
 
 matplotlib.use('TkAgg')
 
-class isoFns:
+class mesa_isochrone:
     def __init__(self, figsize=(12, 8)):
         """Initialize the HR Diagram plotter"""
         self.fig, self.ax = plt.subplots(figsize=figsize)
@@ -17,9 +17,9 @@ class isoFns:
     def load_models(self, model_data):
         """Load stellar evolution models"""
         self.models = model_data
-        self._extract_model_properties()
+        self.__extract_model_properties()
     
-    def _extract_model_properties(self):
+    def __extract_model_properties(self):
         """Extract common properties from all models"""
         self.luminosities = []
         self.temperatures = []
@@ -54,8 +54,14 @@ class isoFns:
                         linewidth=2, 
                         label=f'{self.filenames[i]}')
     
-    def plot_isochrone(self, desired_age, custom_color):
+    def plot_isochrone(self, desired_age, **kwargs):
         """Plot an isochrone for the specified age"""
+
+        track_color = kwargs.get("track_color", "red")
+        resolution = kwargs.get("resolution", 100)
+        tolerance = kwargs.get("tolerance", 10)
+        show_hr = kwargs.get("show_hr", True)
+
         if not self.models:
             raise ValueError("No models loaded. Call load_models() first.")
             
@@ -63,21 +69,22 @@ class isoFns:
         new_lums = []
         
         for i in range(len(self.models)):
-            indices = self._find_closest_age_index(self.ages[i], desired_age)
+            indices = self.__find_closest_age_index(self.ages[i], desired_age)
             
-            if indices[2] < 10:  # Only use if error < 10%
+            if indices[2] < tolerance:  # Only use if error < 10%
                 new_temps.append(self.temperatures[i][indices[1]])
                 new_lums.append(self.luminosities[i][indices[1]])
                 # Plot evolutionary track in grey for reference
                 # Will change to make optional
-                self.ax.plot(self.temperatures[i], 
-                             self.luminosities[i], 
-                             color='grey')
+                if show_hr:
+                    self.ax.plot(self.temperatures[i], 
+                                self.luminosities[i], 
+                                color='grey')
         
         # Create smooth isochrone using cubic spline
         # Uses a parametric interpolation method to combat nonmonoticity
         t = np.arange(len(new_temps))
-        t_fine = np.linspace(0, len(new_temps) - 1, 200)
+        t_fine = np.linspace(0, len(new_temps) - 1, resolution)
         
         cs_temp = CubicSpline(t, new_temps)
         cs_lum = CubicSpline(t, new_lums)
@@ -89,7 +96,7 @@ class isoFns:
         self.ax.plot(temp_smooth, 
                      lum_smooth, 
                      linestyle='--', 
-                     color=custom_color, 
+                     color=track_color, 
                      label=f'Isochrone {desired_age}')
         
         # Plot the original points
@@ -106,7 +113,7 @@ class isoFns:
         plt.show()
     
     @staticmethod
-    def _find_closest_age_index(age_array, desired_age):
+    def __find_closest_age_index(age_array, desired_age):
         """Find the index in age_array closest to desired_age"""
         idx = (np.abs(age_array - desired_age)).argmin()
         percent_error = 100 * abs(age_array[idx] - desired_age) / desired_age
