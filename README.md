@@ -33,3 +33,31 @@ plotter.plot_isochrone(1e9, 'green')
 # Show plot
 plotter.show()
 ```
+
+### Interpolation algorithm
+
+To solve the non-monoticity problem, we must find a polynomial function:<br>
+$P:P(t) = (x(t), y(t)) \textrm{ where } x(t) \textrm{ is log temperature, } y(t) \textrm{ is log luminocity, and }$ <br>
+$t \textrm{ is a time parameter where } t = [0, ..., n-1]$
+
+$n = \lvert \textrm{log effective temperature} \rvert = \lvert \textrm{log luminocity} \rvert = \lvert t \rvert$
+
+$\Rightarrow \exists \textrm{ cubic spline functions } x_{teff}(t) \textrm{ and } y_{logL}(t) : P_{isochrone} = (x_{teff}(t), y_{logL}(t))$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
