@@ -1,5 +1,5 @@
 from mesa_reader import MesaData
-from isoFns import isoFns
+from mesa_isochrone import mesa_isochrone
 
 # Initialize and load data
 plotter = isoFns()
