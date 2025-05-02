@@ -9,7 +9,7 @@ name = ["0.5mass", "0.7mass", "0.9mass", "1mass", "1.2mass", "1.4mass",
         "3mass", "4mass", "5mass", "6mass", "7mass", "8mass", "9mass", "10mass"]
 
 for n in name:
-    md.append(MesaData('gregsWork/work/LOGS/' + n + '.data'))
+    md.append(MesaData('data/' + n + '.data'))
 
 plotter.load_models(md)
 
