@@ -5,10 +5,18 @@
 ### functions:
 ```
 load_models(mesa_data) # takes a 2d array of mesa data
-plot_isochrone(desired_age, color) # plots an isochrone of a desired year over a hr diagram
+plot_isochrone(desired_age) # plots an isochrone of a desired year over a hr diagram
 plot_evolutionary_tracks() # plots a colorful hr diagram
 show() # shows the plot that has been created
 ```
+<strong>Optional flags for ```plot_isochrone()```</strong><br>
+
+defaults are shown:
+- change color of isochrone track: ```track_color='red'```
+- change number of points in the graph: ```resolution=100```
+- change % difference from desired age allowed: ```tolerance=10```
+- show hr tracks behind isochrones: ```show_hr=True```
+
 
 ### Sample usage
 ```
@@ -28,7 +36,7 @@ for n in name:
 plotter.load_models(md)
 
 # Add isochrones
-plotter.plot_isochrone(1e9, 'green')
+plotter.plot_isochrone(1e9, track_color='green', tolerance=5)
 
 # Show plot
 plotter.show()
