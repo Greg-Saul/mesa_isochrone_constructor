@@ -1,5 +1,10 @@
-from mesa_reader import MesaData
+#from mesa_reader import MesaData
 from mesa_isochrone import mesa_isochrone
+import sys
+
+## Local to M Joyce system 
+sys.path.append('/home/mjoyce/MESA/py_mesa_reader/')
+from mesa_reader import MesaData
 
 # Initialize and load data
 plotter = mesa_isochrone()
