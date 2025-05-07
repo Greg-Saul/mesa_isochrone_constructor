@@ -8,7 +8,7 @@ import os
 matplotlib.use('TkAgg')
 
 class mesa_isochrone:
-    def __init__(self, figsize=(12, 8)):
+    def __init__(self, figsize=(8, 12)):
         """Initialize the HR Diagram plotter"""
         self.fig, self.ax = plt.subplots(figsize=figsize)
         self.models = None
@@ -100,7 +100,7 @@ class mesa_isochrone:
                      label=f'Isochrone {desired_age}')
         
         # Plot the original points
-        self.ax.plot(new_temps, new_lums, 'ko')
+        # self.ax.plot(new_temps, new_lums, 'ko')
     
     def show(self):
         """Display the HR diagram with proper formatting"""
@@ -108,9 +108,21 @@ class mesa_isochrone:
         self.ax.set_ylabel('Log Luminosity', fontsize=14)
         self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
-        self.ax.legend(loc="lower left", fontsize=10)
+        self.ax.legend(loc="lower right", fontsize=10)
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.show()
+
+    def save(self, **kwargs):
+        """Display the HR diagram with proper formatting"""
+        image_name = kwargs.get("image_name", "isochrone_diagram")
+
+        self.ax.invert_xaxis()
+        self.ax.set_ylabel('Log Luminosity', fontsize=14)
+        self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
+        self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
+        self.ax.legend(loc="lower right", fontsize=10)
+        self.ax.grid(True, linestyle='--', alpha=0.7)
+        plt.savefig(image_name + ".png", dpi=300)
     
     @staticmethod
     def __find_closest_age_index(age_array, desired_age):
