@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 import numpy as np
 import os
+import pandas as pd
 
 matplotlib.use('TkAgg')
 
@@ -18,6 +19,38 @@ class mesa_isochrone:
         """Load stellar evolution models"""
         self.models = model_data
         self.__extract_model_properties()
+
+    def md_to_csv(self, filename):
+        os.makedirs(filename, exist_ok=True)
+        df = pd.DataFrame(self.temperatures)
+        df.to_csv(filename + '/temp.csv', index=False, header=False)
+        df = pd.DataFrame(self.ages)
+        df.to_csv(filename + '/ages.csv', index=False, header=False)
+        df = pd.DataFrame(self.luminosities)
+        df.to_csv(filename + '/lum.csv', index=False, header=False)
+
+    def extract_csv(self, foldername):
+        self.luminosities = []
+        self.temperatures = []
+        self.ages = []
+
+        # Read and clean temperatures
+        temp_df = pd.read_csv(foldername + '/temp.csv', header=None)
+        self.temperatures = [
+            row[~np.isnan(row)].tolist() for row in temp_df.values
+        ]
+
+        # Read and clean ages
+        age_df = pd.read_csv(foldername + '/ages.csv', header=None)
+        self.ages = [
+            row[~np.isnan(row)].tolist() for row in age_df.values
+        ]
+
+        # Read and clean luminosities
+        lum_df = pd.read_csv(foldername + '/lum.csv', header=None)
+        self.luminosities = [
+            row[~np.isnan(row)].tolist() for row in lum_df.values
+        ]
     
     def __extract_model_properties(self):
         """Extract common properties from all models"""
@@ -45,14 +78,11 @@ class mesa_isochrone:
     
     def plot_evolutionary_tracks(self):
         """Plot the evolutionary tracks for all loaded models"""
-        if not self.models:
-            raise ValueError("No models loaded. Call load_models() first.")
             
-        for i in range(len(self.models)):
+        for i in range(len(self.ages)):
             self.ax.plot(self.temperatures[i], 
                         self.luminosities[i], 
-                        linewidth=2, 
-                        label=f'{self.filenames[i]}')
+                        linewidth=2)
     
     def plot_isochrone(self, desired_age, **kwargs):
         """Plot an isochrone for the specified age"""
@@ -61,15 +91,12 @@ class mesa_isochrone:
         resolution = kwargs.get("resolution", 100)
         tolerance = kwargs.get("tolerance", 10)
         show_hr = kwargs.get("show_hr", True)
-        show_interactive = kwargs.get("show_interactive", False)
-
-        if not self.models:
-            raise ValueError("No models loaded. Call load_models() first.")
+        show_points = kwargs.get("show_points", False)
             
         new_temps = []
         new_lums = []
         
-        for i in range(len(self.models)):
+        for i in range(len(self.ages)):
             indices = self.__find_closest_age_index(self.ages[i], desired_age)
             
             if indices[2] < tolerance:  # Only use if error < 10%
@@ -98,10 +125,11 @@ class mesa_isochrone:
                      lum_smooth, 
                      linestyle='--', 
                      color=track_color, 
-                     label= "Isochrone" + "{:,}".format(desired_age))
+                     label= "age (years): " + "{:,}".format(desired_age))
         
         # Plot the original points
-        # self.ax.plot(new_temps, new_lums, 'ko')
+        if show_points:
+            self.ax.plot(new_temps, new_lums, 'ko')
     
     def show(self):
         """Display the HR diagram with proper formatting"""
@@ -128,6 +156,8 @@ class mesa_isochrone:
     @staticmethod
     def __find_closest_age_index(age_array, desired_age):
         """Find the index in age_array closest to desired_age"""
+        age_array = np.array(age_array)
         idx = (np.abs(age_array - desired_age)).argmin()
         percent_error = 100 * abs(age_array[idx] - desired_age) / desired_age
         return age_array[idx], idx, percent_error
+    
