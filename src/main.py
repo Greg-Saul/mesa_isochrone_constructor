@@ -14,7 +14,7 @@ t0 = time.time()
 plotter = mesa_isochrone()
 md = []
 
-file_paths = glob.glob("../histories/*.data")
+file_paths = glob.glob("../may_28/*.data")
 file_paths.sort()
 
 print(len(file_paths))
@@ -25,11 +25,13 @@ for path in file_paths:
 plotter.load_models(md)
 
 # Add isochrones
-plotter.plot_isochrone(1e8, track_color='green', show_hr=False, resolution=1000)
-plotter.plot_isochrone(3.16e8, track_color='orange', show_hr=False, resolution=1000)
-plotter.plot_isochrone(1e9, track_color='green', show_hr=False, resolution=1000)
-plotter.plot_isochrone(3.16e9, track_color='blue', show_hr=False, resolution=1000)
-plotter.plot_isochrone(1e10, track_color='purple', show_hr=False, resolution=1000)
+# plotter.plot_isochrone(1e8, track_color='green', show_hr=False, resolution=1000)
+# plotter.plot_isochrone(3.16e8, track_color='orange', show_hr=False, resolution=1000)
+# plotter.plot_isochrone(1e9, track_color='green', show_hr=False, resolution=1000)
+# plotter.plot_isochrone(3.16e9, track_color='blue', show_hr=False, resolution=1000)
+# plotter.plot_isochrone(1e10, track_color='purple', show_hr=False, resolution=1000)
+plotter.plot_isochrone(5e9, track_color='purple', show_hr=False, resolution=1000)
+
 
 t1 = time.time()
 

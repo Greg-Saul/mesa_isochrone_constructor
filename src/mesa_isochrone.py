@@ -61,6 +61,7 @@ class mesa_isochrone:
         resolution = kwargs.get("resolution", 100)
         tolerance = kwargs.get("tolerance", 10)
         show_hr = kwargs.get("show_hr", True)
+        show_interactive = kwargs.get("show_interactive", False)
 
         if not self.models:
             raise ValueError("No models loaded. Call load_models() first.")
@@ -97,7 +98,7 @@ class mesa_isochrone:
                      lum_smooth, 
                      linestyle='--', 
                      color=track_color, 
-                     label=f'Isochrone {desired_age}')
+                     label= "Isochrone" + "{:,}".format(desired_age))
         
         # Plot the original points
         # self.ax.plot(new_temps, new_lums, 'ko')
