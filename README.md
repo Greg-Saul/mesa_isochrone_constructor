@@ -7,6 +7,7 @@
 - pandas
 - numpy
 - matplotlib
+- scipy
 
 ### installation directions (in terminal):
 
