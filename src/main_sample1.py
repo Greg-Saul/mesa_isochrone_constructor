@@ -1,6 +1,7 @@
 ########################################################
 # This sample main is to show loading mesa data objects 
-# into a folder of csv files for later use
+# into a folder of csv files for later use. see 
+# main_sample2.py for csv use.
 #
 # 5/29/25
 ########################################################
@@ -26,7 +27,7 @@ for path in file_paths:
 
 # load objects into a folder named testing of csv files
 plotter.load_models(md)
-plotter.md_to_csv('testing')
+plotter.md_to_csv('sample1')
 
 t1 = time.time()
 

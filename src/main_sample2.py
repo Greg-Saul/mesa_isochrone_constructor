@@ -7,7 +7,6 @@
 # 5/29/25
 ########################################################
 
-from mesa_reader import MesaData
 from mesa_isochrone import mesa_isochrone
 import time
 
@@ -16,8 +15,8 @@ t0 = time.time()
 # Initialize and load data
 plotter = mesa_isochrone()
 
-# load csv data from testing folder into the needed arrays
-plotter.extract_csv('testing')
+# load csv data from sample1 folder into the needed arrays
+plotter.extract_csv('sample1')
 
 # Add isochrones
 plotter.plot_isochrone(1e8, track_color='red', resolution=1000)
