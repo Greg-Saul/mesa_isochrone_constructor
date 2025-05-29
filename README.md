@@ -36,7 +36,12 @@ defaults are shown:
 - change number of points in the graph: ```resolution=100```
 - change % difference from desired age allowed: ```tolerance=10```
 - show hr tracks behind isochrones: ```show_hr=True```
+- show points from mesa data: ```show_points=False```
 
+<strong>Optional flags for ```save()```</strong><br>
+
+defaults are shown:
+ - set image name: ```image_name="isochrone_diagram"```
 
 ### Sample usage
 
