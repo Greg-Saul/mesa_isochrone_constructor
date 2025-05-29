@@ -2,11 +2,21 @@
 
 ```py_mesa_interpolation``` is a tool that is designed to be used with [py_mesa_reader](https://github.com/wmwolf/py_mesa_reader) and [MESA stellar astrophysics program](https://docs.mesastar.org/en/latest/) to create isochrone plots over multiple tracks.
 
-### dependencies
+### dependencies:
 - py_mesa_reader
 - pandas
 - numpy
 - matplotlib
+
+### installation directions (in terminal):
+
+1) check dependencies and make sure they are all properly installed
+2) ```git clone https://github.com/Greg-Saul/mesa_isochrone_constructor.git```
+3) ```cd mesa_isochrone_constructor/src```
+4) ```python3 main_sample1.py```
+5) ```python3 main_sample2.py```
+6) if these run and pop up an isochrone, mesa_isochrone_constructor is properly installed and ready for use
+
 
 ### functions:
 ```
