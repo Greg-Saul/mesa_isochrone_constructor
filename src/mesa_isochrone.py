@@ -1,5 +1,4 @@
 import matplotlib
-import tkinter as tk
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 import numpy as np
@@ -70,11 +69,6 @@ class mesa_isochrone:
             self.filenames.append(os.path.basename(model.file_name))
         
         self.min_age_length = min(self.age_lengths)
-        
-        # Trim all arrays to minimum age length
-        # for i in range(len(self.models)):
-        #     self.temperatures[i] = self.temperatures[i][:self.min_age_length]
-        #     self.luminosities[i] = self.luminosities[i][:self.min_age_length]
     
     def plot_evolutionary_tracks(self):
         """Plot the evolutionary tracks for all loaded models"""
