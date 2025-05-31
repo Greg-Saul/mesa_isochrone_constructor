@@ -15,6 +15,7 @@ def open_file_explorer():
     if file_paths:
         selected_files.extend(file_paths)
         update_file_list()
+        print(file_paths)
 
 def update_file_list():
     file_list.delete(0, tk.END)
