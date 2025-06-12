@@ -56,9 +56,11 @@ To solve the non-monoticity problem, we must find a polynomial function:<br>
 $P:P(t) = (x(t), y(t)) \textrm{ where } x(t) \textrm{ is log temperature, } y(t) \textrm{ is log luminocity, and }$ <br>
 $t \textrm{ is a time parameter where } t = [0, ..., n-1]$
 
-$n = \lvert \textrm{log effective temperature} \rvert = \lvert \textrm{log luminosity} \rvert = \lvert t \rvert$
+$n = \lvert \textrm{log effective temperature} \rvert = \lvert \textrm{log luminosity} \rvert = \lvert t \rvert = \text{number of tracks}$
 
-$\Rightarrow \exists \textrm{ cubic spline functions } x_\text{teff}(t) \textrm{ and } y_\text{logL}(t) : P_\text{isochrone} = (x_\text{teff}(t), y_\text{logL}(t))$
+$i = [0, ..., \text{ desired resolution}]$
+
+$\Rightarrow \exists \textrm{ cubic spline functions } x_\text{teff}(i) \textrm{ and } y_\text{logL}(i) : P_\text{isochrone}(i) = (x_\text{teff}(i), y_\text{logL}(i))$
 
 
 
