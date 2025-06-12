@@ -19,7 +19,7 @@ md = []
 
 # find filepaths to mesa data
 file_paths = glob.glob("./data/*.data")
-file_paths.sort()
+file_paths = sorted(file_paths, key=plotter.sort_by_mass_key)
 
 # load mesa data objects into an array
 for path in file_paths:

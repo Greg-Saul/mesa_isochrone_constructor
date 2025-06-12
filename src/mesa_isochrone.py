@@ -4,6 +4,7 @@ from scipy.interpolate import CubicSpline
 import numpy as np
 import os
 import pandas as pd
+import re
 
 matplotlib.use('TkAgg')
 
@@ -13,6 +14,8 @@ class mesa_isochrone:
         self.fig, self.ax = plt.subplots(figsize=figsize)
         self.models = None
         self.min_age_length = None
+        self.ax.invert_xaxis()
+
     
     def load_models(self, model_data):
         """Load stellar evolution models"""
@@ -33,19 +36,16 @@ class mesa_isochrone:
         self.temperatures = []
         self.ages = []
 
-        # Read and clean temperatures
         temp_df = pd.read_csv(foldername + '/temp.csv', header=None)
         self.temperatures = [
             row[~np.isnan(row)].tolist() for row in temp_df.values
         ]
 
-        # Read and clean ages
         age_df = pd.read_csv(foldername + '/ages.csv', header=None)
         self.ages = [
             row[~np.isnan(row)].tolist() for row in age_df.values
         ]
 
-        # Read and clean luminosities
         lum_df = pd.read_csv(foldername + '/lum.csv', header=None)
         self.luminosities = [
             row[~np.isnan(row)].tolist() for row in lum_df.values
@@ -127,7 +127,7 @@ class mesa_isochrone:
     
     def show(self):
         """Display the HR diagram with proper formatting"""
-        self.ax.invert_xaxis()
+        # self.ax.invert_xaxis()
         self.ax.set_ylabel('Log Luminosity', fontsize=14)
         self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
@@ -139,7 +139,7 @@ class mesa_isochrone:
         """Display the HR diagram with proper formatting"""
         image_name = kwargs.get("image_name", "isochrone_diagram")
 
-        self.ax.invert_xaxis()
+        # self.ax.invert_xaxis()
         self.ax.set_ylabel('Log Luminosity', fontsize=14)
         self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
@@ -154,4 +154,10 @@ class mesa_isochrone:
         idx = (np.abs(age_array - desired_age)).argmin()
         percent_error = 100 * abs(age_array[idx] - desired_age) / desired_age
         return age_array[idx], idx, percent_error
+
+    def sort_by_mass_key(self, filename):
+        match = re.search(r'(\d+(?:\.\d+)?)(?:m|mass)|(?:m|mass)(\d+(?:\.\d+)?)', filename, re.IGNORECASE)
+        if match:
+            return float(match.group(1))
+        return float('inf')
     
