@@ -20,7 +20,9 @@ plotter = mesa_isochrone()
 md = []
 
 file_paths = glob.glob("./data/*.data")
-file_paths.sort()
+file_paths = sorted(file_paths, key=plotter.sort_by_mass_key)
+
+print(file_paths)
 
 for path in file_paths:
   md.append(MesaData(path))
@@ -28,7 +30,7 @@ for path in file_paths:
 plotter.load_models(md)
 
 # Add isochrones to plot
-plotter.plot_isochrone(1e8, track_color='red', resolution=1000)
+plotter.plot_isochrone(1e8, track_color='red', show_hr=False, resolution=1000)
 plotter.plot_isochrone(3.16e8, track_color='orange', show_hr=False, resolution=1000)
 plotter.plot_isochrone(1e9, track_color='green', show_hr=False, resolution=1000)
 plotter.plot_isochrone(3.16e9, track_color='blue', show_hr=False, resolution=1000)
@@ -39,4 +41,5 @@ t1 = time.time()
 print("created isochrones in", t1-t0, "seconds")
 
 # Save plot
-plotter.save(image_name="sample3")
+plotter.save()
+plotter.show()
