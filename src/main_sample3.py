@@ -30,11 +30,11 @@ for path in file_paths:
 plotter.load_models(md)
 
 # Add isochrones to plot
-plotter.plot_isochrone(1e8, track_color='red', show_hr=False, resolution=1000)
-plotter.plot_isochrone(3.16e8, track_color='orange', show_hr=False, resolution=1000)
-plotter.plot_isochrone(1e9, track_color='green', show_hr=False, resolution=1000)
-plotter.plot_isochrone(3.16e9, track_color='blue', show_hr=False, resolution=1000)
-plotter.plot_isochrone(1e10, track_color='purple', show_hr=False, resolution=1000)
+plotter.plot_isochrone(1e8, track_color='red', show_hr=False, resolution=1000, tolerance=25, interpolation_method="PCHIP")
+plotter.plot_isochrone(3.16e8, track_color='orange', show_hr=False, resolution=1000, tolerance=25, interpolation_method="PCHIP")
+plotter.plot_isochrone(1e9, track_color='green', show_hr=False, resolution=1000, tolerance=25, interpolation_method="PCHIP")
+plotter.plot_isochrone(3.16e9, track_color='blue', show_hr=False, resolution=1000, tolerance=25, interpolation_method="PCHIP")
+plotter.plot_isochrone(1e10, track_color='purple', show_hr=False, resolution=1000, tolerance=25, interpolation_method="PCHIP")
 
 t1 = time.time()
 
