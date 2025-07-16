@@ -1,6 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import *
 import numpy as np
 import os
 import pandas as pd
@@ -86,6 +86,7 @@ class mesa_isochrone:
         tolerance = kwargs.get("tolerance", 10)
         show_hr = kwargs.get("show_hr", True)
         show_points = kwargs.get("show_points", False)
+        interp = kwargs.get("interpolation_method", "cubic_spline")
             
         new_temps = []
         new_lums = []
@@ -108,11 +109,17 @@ class mesa_isochrone:
         t = np.arange(len(new_temps))
         t_fine = np.linspace(0, len(new_temps) - 1, resolution)
         
-        cs_temp = CubicSpline(t, new_temps)
-        cs_lum = CubicSpline(t, new_lums)
+        #this uses the cubic spline interpolation method -- default
+        if interp == "cubic_spline":
+            temp = CubicSpline(t, new_temps)
+            lum = CubicSpline(t, new_lums)
+        # this uses the linear interpolationvmethod
+        elif interp == "PCHIP":
+            temp = PchipInterpolator(t, new_temps)
+            lum = PchipInterpolator(t, new_lums)	
         
-        temp_smooth = cs_temp(t_fine)
-        lum_smooth = cs_lum(t_fine)
+        temp_smooth = temp(t_fine)
+        lum_smooth = lum(t_fine)
         
         # Plot the isochrone
         self.ax.plot(temp_smooth, 
