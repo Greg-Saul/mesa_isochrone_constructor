@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 import re
+import json
 
 matplotlib.use('TkAgg')
 
@@ -22,34 +23,52 @@ class mesa_isochrone:
         self.models = model_data
         self.__extract_model_properties()
 
-    def md_to_csv(self, filename):
-        os.makedirs(filename, exist_ok=True)
-        df = pd.DataFrame(self.temperatures)
-        df.to_csv(filename + '/temp.csv', index=False, header=False)
-        df = pd.DataFrame(self.ages)
-        df.to_csv(filename + '/ages.csv', index=False, header=False)
-        df = pd.DataFrame(self.luminosities)
-        df.to_csv(filename + '/lum.csv', index=False, header=False)
+    def export(self, filename, **kwargs):
+        file_type = kwargs.get("file_type", "csv")
 
-    def extract_csv(self, foldername):
+        star_data = {"lum":self.luminosities, "temp":self.temperatures, "ages":self.ages}
+
+        if file_type == "csv":
+            os.makedirs(filename, exist_ok=True)
+            df = pd.DataFrame(self.temperatures)
+            df.to_csv(filename + '/temp.csv', index=False, header=False)
+            df = pd.DataFrame(self.ages)
+            df.to_csv(filename + '/ages.csv', index=False, header=False)
+            df = pd.DataFrame(self.luminosities)
+            df.to_csv(filename + '/lum.csv', index=False, header=False)
+        elif file_type == "json":
+            with open(filename, "w") as file:
+                json.dump(star_data, file)
+
+    def extract_csv(self, filename):
+
         self.luminosities = []
         self.temperatures = []
         self.ages = []
 
-        temp_df = pd.read_csv(foldername + '/temp.csv', header=None)
-        self.temperatures = [
-            row[~np.isnan(row)].tolist() for row in temp_df.values
-        ]
+        if filename.endswith(".json"):
+            with open(filename, "r") as file:
+                star_data = json.load(file)
+            self.luminosities = star_data["lum"]
+            self.temperatures = star_data["temp"]
+            self.ages = star_data["ages"]
+        elif os.path.isdir(filename):
+            temp_df = pd.read_csv(filename + '/temp.csv', header=None)
+            self.temperatures = [
+                row[~np.isnan(row)].tolist() for row in temp_df.values
+            ]
 
-        age_df = pd.read_csv(foldername + '/ages.csv', header=None)
-        self.ages = [
-            row[~np.isnan(row)].tolist() for row in age_df.values
-        ]
+            age_df = pd.read_csv(filename + '/ages.csv', header=None)
+            self.ages = [
+                row[~np.isnan(row)].tolist() for row in age_df.values
+            ]
 
-        lum_df = pd.read_csv(foldername + '/lum.csv', header=None)
-        self.luminosities = [
-            row[~np.isnan(row)].tolist() for row in lum_df.values
-        ]
+            lum_df = pd.read_csv(filename + '/lum.csv', header=None)
+            self.luminosities = [
+                row[~np.isnan(row)].tolist() for row in lum_df.values
+            ]
+        else:
+            print("ERROR: file type not recognized")
     
     def __extract_model_properties(self):
         """Extract common properties from all models"""
@@ -61,10 +80,10 @@ class mesa_isochrone:
         self.filenames = []
         
         for model in self.models:
-            self.luminosities.append(model.data('log_L'))
-            self.temperatures.append(model.data('log_Teff'))
+            self.luminosities.append(model.data('log_L').tolist())
+            self.temperatures.append(model.data('log_Teff').tolist())
             self.masses.append(model.star_mass[0])
-            self.ages.append(model.star_age)
+            self.ages.append(model.star_age.tolist())
             self.age_lengths.append(len(model.star_age))
             self.filenames.append(os.path.basename(model.file_name))
         
@@ -116,21 +135,33 @@ class mesa_isochrone:
         # this uses the linear interpolationvmethod
         elif interp == "PCHIP":
             temp = PchipInterpolator(t, new_temps)
-            lum = PchipInterpolator(t, new_lums)	
-        
-        temp_smooth = temp(t_fine)
-        lum_smooth = lum(t_fine)
-        
-        # Plot the isochrone
-        self.ax.plot(temp_smooth, 
-                     lum_smooth, 
-                     linestyle='--', 
-                     color=track_color, 
-                     label= "age (years): " + "{:,}".format(desired_age))
-        
-        # Plot the original points
-        if show_points:
-            self.ax.plot(new_temps, new_lums, 'ko')
+            lum = PchipInterpolator(t, new_lums)
+        elif interp == "linear":	
+            # Plot the isochrone
+            self.ax.plot(new_temps, 
+                        new_lums, 
+                        linestyle='--', 
+                        color=track_color, 
+                        label= "age (years): " + "{:,}".format(desired_age))
+            
+            # Plot the original points
+            if show_points:
+                self.ax.plot(new_temps, new_lums, 'ko')
+
+        if interp != "linear":
+            temp_smooth = temp(t_fine)
+            lum_smooth = lum(t_fine)
+            
+            # Plot the isochrone
+            self.ax.plot(temp_smooth, 
+                        lum_smooth, 
+                        linestyle='--', 
+                        color=track_color, 
+                        label= "age (years): " + "{:,}".format(desired_age))
+            
+            # Plot the original points
+            if show_points:
+                self.ax.plot(new_temps, new_lums, 'ko')
     
     def show(self):
         """Display the HR diagram with proper formatting"""
