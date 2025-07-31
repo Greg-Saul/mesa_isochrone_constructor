@@ -27,9 +27,9 @@ for path in file_paths:
 
 # load objects into a folder named testing of csv files
 plotter.load_models(md)
-plotter.md_to_csv('sample1')
+plotter.export('star_data', file_type="csv")
 
 t1 = time.time()
 
-print("created csv's in", t1-t0, "seconds")
+print("created files in", t1 - t0, "seconds")
 

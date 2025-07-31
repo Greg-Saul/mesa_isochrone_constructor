@@ -16,7 +16,7 @@ t0 = time.time()
 plotter = mesa_isochrone()
 
 # load csv data from sample1 folder into the needed arrays
-plotter.extract_csv('sample1')
+plotter.extract_csv('star_data')
 
 # Add isochrones
 plotter.plot_isochrone(1e8, track_color='red', resolution=1000)
