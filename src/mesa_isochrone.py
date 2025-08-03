@@ -143,6 +143,13 @@ class mesa_isochrone:
                         linestyle='--', 
                         color=track_color, 
                         label= "age (years): " + "{:,}".format(desired_age))
+        elif interp == "make_interp_spline":
+            temp = make_interp_spline(t, new_temps)
+            lum = make_interp_spline(t, new_lums)
+        elif interp == "akima":
+            temp = Akima1DInterpolator(t, new_temps)
+            lum = Akima1DInterpolator(t, new_lums)
+
             
             # Plot the original points
             if show_points:
