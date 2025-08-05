@@ -6,6 +6,10 @@ import os
 import pandas as pd
 import re
 import json
+import sys
+import shutil
+import filetype
+# pip install pyarrow for parquet file conversion
 
 matplotlib.use('TkAgg')
 
@@ -29,6 +33,12 @@ class mesa_isochrone:
         star_data = {"lum":self.luminosities, "temp":self.temperatures, "ages":self.ages}
 
         if file_type == "csv":
+            if os.path.exists(filename):
+                overwrite = input("Folder already exists, would you like to overwrite it? enter 'y' for yes: ")
+                if overwrite == "y" or overwrite == "Y":
+                    shutil.rmtree(filename)
+                else:
+                    sys.exit()
             os.makedirs(filename, exist_ok=True)
             df = pd.DataFrame(self.temperatures)
             df.to_csv(filename + '/temp.csv', index=False, header=False)
@@ -39,6 +49,20 @@ class mesa_isochrone:
         elif file_type == "json":
             with open(filename, "w") as file:
                 json.dump(star_data, file)
+        elif file_type == "parquet":
+            if os.path.exists(filename):
+                overwrite = input("Folder already exists, would you like to overwrite it? enter 'y' for yes: ")
+                if overwrite == "y" or overwrite == "Y":
+                    shutil.rmtree(filename)
+                else:
+                    sys.exit()
+            os.makedirs(filename)
+            df = pd.DataFrame(self.temperatures)
+            df.to_parquet(filename + '/temp.parquet')
+            df = pd.DataFrame(self.ages)
+            df.to_parquet(filename + '/ages.parquet')
+            df = pd.DataFrame(self.luminosities)
+            df.to_parquet(filename + '/lum.parquet')
 
     def extract_csv(self, filename):
 
@@ -53,22 +77,40 @@ class mesa_isochrone:
             self.temperatures = star_data["temp"]
             self.ages = star_data["ages"]
         elif os.path.isdir(filename):
-            temp_df = pd.read_csv(filename + '/temp.csv', header=None)
-            self.temperatures = [
-                row[~np.isnan(row)].tolist() for row in temp_df.values
-            ]
+            files = os.listdir(filename)
+            if files[0].endswith(".csv"):
+                temp_df = pd.read_csv(filename + '/temp.csv', header=None)
+                self.temperatures = [
+                    row[~np.isnan(row)].tolist() for row in temp_df.values
+                ]
 
-            age_df = pd.read_csv(filename + '/ages.csv', header=None)
-            self.ages = [
-                row[~np.isnan(row)].tolist() for row in age_df.values
-            ]
+                age_df = pd.read_csv(filename + '/ages.csv', header=None)
+                self.ages = [
+                    row[~np.isnan(row)].tolist() for row in age_df.values
+                ]
 
-            lum_df = pd.read_csv(filename + '/lum.csv', header=None)
-            self.luminosities = [
-                row[~np.isnan(row)].tolist() for row in lum_df.values
-            ]
+                lum_df = pd.read_csv(filename + '/lum.csv', header=None)
+                self.luminosities = [
+                    row[~np.isnan(row)].tolist() for row in lum_df.values
+                ]
+            if files[0].endswith(".parquet"):
+                temp_df = pd.read_parquet(filename + '/temp.parquet')
+                self.temperatures = [
+                    row[~np.isnan(row)].tolist() for row in temp_df.values
+                ]
+
+                age_df = pd.read_parquet(filename + '/ages.parquet')
+                self.ages = [
+                    row[~np.isnan(row)].tolist() for row in age_df.values
+                ]
+
+                lum_df = pd.read_parquet(filename + '/lum.parquet')
+                self.luminosities = [
+                    row[~np.isnan(row)].tolist() for row in lum_df.values
+                ]
         else:
             print("ERROR: file type not recognized")
+            sys.exit()
     
     def __extract_model_properties(self):
         """Extract common properties from all models"""
