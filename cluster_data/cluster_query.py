@@ -1,9 +1,6 @@
 import pandas as pd
 from astroquery.gaia import Gaia
-# from scipy import CubicSpline
-
-# Input Variables
-# Example: NGC6397
+import numpy as np
 
 name = "NGC6397"
 
@@ -25,13 +22,6 @@ tables = Gaia.load_tables(only_names=True)
 job = Gaia.launch_job_async(
     f"""
     SELECT
-        g.source_id,
-        g.ra,
-        g.dec,
-        g.pmra,
-        g.pmdec,
-        g.phot_g_mean_mag,
-        g.parallax,
         a.teff_gspphot,
         a.lum_flame,
         a.mass_flame
@@ -39,17 +29,18 @@ job = Gaia.launch_job_async(
     JOIN gaiadr3.astrophysical_parameters AS a
         ON g.source_id = a.source_id
     WHERE DISTANCE({ra_new}, {dec_new}, g.ra, g.dec) < 5./60.
-        AND g.phot_bp_mean_mag < 20.3
         AND g.astrometric_params_solved != 3
     """,
     dump_to_file=True
 )
 
-# ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'teff_gspphot', 'phot_g_mean_mag', 'parallax', 'astrometric_params_solved', 'dist']
 df = job.get_results().to_pandas()
 
-output_file = f"{name}_gaia_data.csv"
-df.to_csv(output_file, index=False)
-print(f"Results saved to {output_file}")
+df['log_L'] = np.where(df['lum_flame'] > 0, np.log10(df['lum_flame']), np.nan)
+df['log_Teff'] = np.where(df['teff_gspphot'] > 0, np.log10(df['teff_gspphot']), np.nan)
 
+df = df.dropna()
 
+log_output_file = "NGC6397_gaia_data_log_format.csv"
+
+df[["log_L", "log_Teff", "mass_flame"]].to_csv(log_output_file, index=False)
