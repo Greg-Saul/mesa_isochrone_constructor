@@ -5,17 +5,11 @@ import matplotlib.pyplot as plt
 
 name = "NGC6397"
 
-# Galactic coordinates of the globular cluster
-# Example: Aladin lite can search the cluster by target identifier: https://aladin.cds.unistra.fr/AladinLite/
 ra_new = 265.175375
 dec_new = -53.674333
 
-# Proper motion coordinates of the cluster
-# Example database: https://simbad.u-strasbg.fr/simbad/sim-basicIdent=m33&submit=SIMBAD+search
-centerx, centery = -17.600	, 3.300	
+centerx, centery = -17.600, 3.300
 
-# Cutoff radius in the proper motion space 
-# rad is the distance from the center of the cluster, rad2 is the radius of the circle within which we keep the members
 rad, rad2 = 0, 1.5
 
 tables = Gaia.load_tables(only_names=True)
@@ -42,23 +36,20 @@ job = Gaia.launch_job_async(
     WHERE DISTANCE({ra_new}, {dec_new}, g.ra, g.dec) < 5./60.
         AND g.phot_bp_mean_mag < 20.3
         AND g.astrometric_params_solved != 3
+        AND g.parallax > 0
+        AND g.parallax_over_error > 3.5
     """
 )
 
-
 df = job.get_results().to_pandas()
 
-# Compute squared distance for filtering
 distance_sq = (df.pmdec - centerx) ** 2 + (df.pmra - centery) ** 2
 df = df[(distance_sq > rad**2) & (distance_sq < rad2**2)]
-
-# Filter out rows with NaN in 'bp_rp'
 df = df[df['bp_rp'].notna()]
 
 def c(i_bp, i_rp, i_g):
     return (i_bp + i_rp) / i_g
 
-# Constants
 c0 = 0.0059898 
 c1 = 8.817481e-11  
 c3 = 7.618399
@@ -78,13 +69,15 @@ df['sigma_c'] = df['phot_g_mean_mag'].apply(sigma_c)
 df['c_star'] = df['bp_rp'].apply(f)
 df['c_diff'] = df['c'] - df['c_star']
 
-# Apply filtering: Keep rows where c_diff is within ±sigma_c 
 df = df[(df['c_diff'] >= -df['sigma_c']) & (df['c_diff'] <= df['sigma_c'])]
+
 fig, ax = plt.subplots(figsize=(8, 12))
 ax.invert_yaxis()
 plt.scatter(df.bp_rp, df.phot_g_mean_mag, s=5, color="gray")
 
+print(len(df.bp_rp))
+
 output_file = "NGC6397_gaia_data.csv"
 df[["bp_rp", "phot_g_mean_mag", "parallax"]].to_csv(output_file, index=False)
 
-plt.show()
+# plt.show()
