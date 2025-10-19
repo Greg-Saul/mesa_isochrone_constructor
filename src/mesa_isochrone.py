@@ -9,6 +9,7 @@ import json
 import sys
 import shutil
 import mplcursors
+import time
 
 matplotlib.use('TkAgg')
 
@@ -20,6 +21,7 @@ class mesa_isochrone:
         self.ax.invert_xaxis()
 
     def load_models(self, model_data):
+        self.models = None
         self.models = model_data
         self.__extract_model_properties()
 
@@ -62,7 +64,7 @@ class mesa_isochrone:
             df = pd.DataFrame(self.masses)
             df.to_parquet(filename + '/masses.parquet')
 
-    def extract_csv(self, filename):
+    def extract_file(self, filename):
         self.luminosities = []
         self.temperatures = []
         self.ages = []
@@ -118,13 +120,16 @@ class mesa_isochrone:
         for i in range(len(self.ages)):
             self.ax.plot(self.temperatures[i], self.luminosities[i], linewidth=2)
 
-    def plot_isochrone(self, desired_age, **kwargs):
+    def plot_isochrone(self, filename, desired_age, **kwargs):
         track_color = kwargs.get("track_color", "red")
-        resolution = kwargs.get("resolution", 100)
+        resolution = kwargs.get("resolution", 1000)
         tolerance = kwargs.get("tolerance", 10)
         show_hr = kwargs.get("show_hr", True)
         show_points = kwargs.get("show_points", False)
         interp = kwargs.get("interpolation_method", "cubic_spline")
+
+        self.extract_file(filename)
+
         new_temps = []
         new_lums = []
         masses_used = []
@@ -171,8 +176,8 @@ class mesa_isochrone:
             
 
     def show(self):
-        self.ax.set_ylabel('Log Luminosity', fontsize=14)
-        self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
+        self.ax.set_xlabel(r'$\log T_{\mathrm{eff}}$ [K]')
+        self.ax.set_ylabel(r'$\log L\ [L_\odot]$')
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
         self.ax.legend(loc="lower right", fontsize=10)
         self.ax.grid(True, linestyle='--', alpha=0.7)
@@ -180,8 +185,8 @@ class mesa_isochrone:
 
     def save(self, **kwargs):
         image_name = kwargs.get("image_name", "isochrone_diagram")
-        self.ax.set_ylabel('Log Luminosity', fontsize=14)
-        self.ax.set_xlabel('Log Effective Temperature', fontsize=14)
+        self.ax.set_xlabel(r'$\log T_{\mathrm{eff}}$ [K]')
+        self.ax.set_ylabel(r'$\log L\ [L_\odot]$')
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.savefig(image_name + ".png", dpi=300)
@@ -197,3 +202,25 @@ class mesa_isochrone:
         if match:
             return float(match.group(1) or match.group(2))
         return float('inf')
+
+    # updated 10/19/25
+    def function_summary(self):
+        print("*default kwarg*\n")
+        print("- load_models(<list>mesa_data)")
+        print('''- export(<string>file_name, **kwargs)
+            <string>file_type - *"csv"*, "json", "parquet"''')
+        print("- extract_file(<string>file_name)")
+        print("- plot_evolutionary_track()")
+        print('''- plot_isochrone(<string>file_name, <float>age, **kwargs)
+            <string>track_color - *"red"*
+            <integer>resolution - *1000*
+            <float>tolerance - *10*
+            <boolean>show_hr - *True*
+            <boolean>show_points - *False*
+            <string>interp - *"cubic_spline"*, "PCHIP", "linear", "akima", "make_interp_spline"''')
+        print("- show()")
+        print('''- save(**kwargs)
+            <string>image_name - *"isochrone_diagram"*''')
+        print('''- sort_by_mass_key
+            example usage: <list>file_paths = sorted(<list>file_paths, key=plotter.sort_by_mass_key)''')
+
