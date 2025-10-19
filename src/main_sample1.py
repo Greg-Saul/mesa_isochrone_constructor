@@ -13,23 +13,24 @@ import time
 
 t0 = time.time()
 
-# Initialize plotter library
+# # Initialize plotter library
 plotter = mesa_isochrone()
-md = []
+plotter.function_summary()
+
+md1 = []
 
 # find filepaths to mesa data
-file_paths = glob.glob("./data/*.data")
-file_paths = sorted(file_paths, key=plotter.sort_by_mass_key)
+file_paths1 = glob.glob("./data/*.data")
+
+file_paths1 = sorted(file_paths1, key=plotter.sort_by_mass_key)
 
 # load mesa data objects into an array
-for path in file_paths:
-  md.append(MesaData(path))
+for path in file_paths1:
+  md1.append(MesaData(path))
 
-# load objects into a folder named testing of csv files
-plotter.load_models(md)
-plotter.export('star_data', file_type="csv")
+plotter.load_models(md1)
+plotter.export('testing.json', file_type="json")
 
 t1 = time.time()
 
 print("created files in", t1 - t0, "seconds")
-
