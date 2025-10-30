@@ -163,11 +163,11 @@ class mesa_isochrone:
         if interp != "linear":
             temp_smooth = temp(t_fine)
             lum_smooth = lum(t_fine)
-            self.ax.plot(temp_smooth, lum_smooth, linestyle='--', color=track_color, label= "age (years): " + "{:,}".format(desired_age))
+            self.ax.plot(temp_smooth, lum_smooth, color=track_color, label= "age (years): " + "{:,}".format(desired_age))
             if show_points:
                 sc = self.ax.plot(new_temps, new_lums, 'ko')
-                print("Masses for plotted points:", masses_used)
-                print(len(masses_used))
+                # print("Masses for plotted points:", masses_used)
+                # print(len(masses_used))
                 cursor = mplcursors.cursor(sc, hover=True)
                 cursor.connect("add", lambda sel: sel.annotation.set_text(
                     # f""
@@ -183,13 +183,18 @@ class mesa_isochrone:
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.show()
 
+    def gaia_stack(self, filename):
+        df = pd.read_csv(filename)
+        self.ax.plot(df['x_back'], df['y_back'])
+
+
     def save(self, **kwargs):
         image_name = kwargs.get("image_name", "isochrone_diagram")
         self.ax.set_xlabel(r'$\log T_{\mathrm{eff}}$ [K]')
         self.ax.set_ylabel(r'$\log L\ [L_\odot]$')
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
         self.ax.grid(True, linestyle='--', alpha=0.7)
-        plt.savefig(image_name + ".png", dpi=300)
+        plt.savefig(image_name + ".png")
 
     def __find_closest_age_index(self, age_array, desired_age):
         age_array = np.array(age_array)
@@ -223,4 +228,3 @@ class mesa_isochrone:
             <string>image_name - *"isochrone_diagram"*''')
         print('''- sort_by_mass_key
             example usage: <list>file_paths = sorted(<list>file_paths, key=plotter.sort_by_mass_key)''')
-
