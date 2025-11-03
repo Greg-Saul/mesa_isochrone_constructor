@@ -183,9 +183,10 @@ class mesa_isochrone:
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.show()
 
-    def gaia_stack(self, filename):
-        df = pd.read_csv(filename)
+    def gaia_stack(self, filename1):
+        df = pd.read_csv(filename1)
         self.ax.plot(df['x_back'], df['y_back'])
+        self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='grey')
 
 
     def save(self, **kwargs):
