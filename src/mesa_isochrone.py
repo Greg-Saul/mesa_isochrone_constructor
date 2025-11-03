@@ -127,6 +127,7 @@ class mesa_isochrone:
         show_hr = kwargs.get("show_hr", True)
         show_points = kwargs.get("show_points", False)
         interp = kwargs.get("interpolation_method", "cubic_spline")
+        clean = kwargs.get("clean", False)
 
         self.extract_file(filename)
 
@@ -161,9 +162,13 @@ class mesa_isochrone:
             temp = Akima1DInterpolator(t, new_temps)
             lum = Akima1DInterpolator(t, new_lums)
         if interp != "linear":
-            temp_smooth = temp(t_fine)
-            lum_smooth = lum(t_fine)
-            self.ax.plot(temp_smooth, lum_smooth, color=track_color, label= "age (years): " + "{:,}".format(desired_age))
+            self.temp_smooth = temp(t_fine)
+            self.lum_smooth = lum(t_fine)
+            if clean == False:
+                self.ax.plot(self.temp_smooth, self.lum_smooth, color=track_color, label= "age (years): " + "{:,}".format(desired_age))
+            if clean == True:
+                self.ax.axis("off")
+                self.ax.plot(self.temp_smooth, self.lum_smooth, color="k")
             if show_points:
                 sc = self.ax.plot(new_temps, new_lums, 'ko')
                 # print("Masses for plotted points:", masses_used)
@@ -183,11 +188,27 @@ class mesa_isochrone:
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.show()
 
+    def show_clean(self):
+        plt.show()
+
     def gaia_stack(self, filename1):
         df = pd.read_csv(filename1)
-        self.ax.plot(df['x_back'], df['y_back'])
-        self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='grey')
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        self.ax.plot(df['x_back'], df['y_back'], color='black')
+        # self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='grey'
+        print(df['x_back'][0], df['y_back'][0])
+        print(self.temp_smooth[0], self.lum_smooth[0])
 
+        self.ax.plot([df['x_back'][0], self.temp_smooth[0]],
+         [df['y_back'][0], self.lum_smooth[0]],
+          color='k'
+        )
+        self.ax.plot(
+            [df['x_back'].iloc[-1], self.temp_smooth[-1]],
+            [df['y_back'].iloc[-1], self.lum_smooth[-1]],
+            color='k'
+        )
 
     def save(self, **kwargs):
         image_name = kwargs.get("image_name", "isochrone_diagram")

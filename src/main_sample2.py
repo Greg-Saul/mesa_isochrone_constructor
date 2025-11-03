@@ -16,15 +16,16 @@ t0 = time.time()
 plotter = mesa_isochrone()
 # plotter.function_summary()
 # Add isochrones
-# plotter.gaia_stack("../cluster_data/NGC6397_fine_isochrone.csv")
-plotter.plot_isochrone("z_0.014.json", 1.34e10, track_color="red")
+plotter.plot_isochrone("z_0.014.json", 1.34e10, track_color="red", clean=True, show_hr=False)
+plotter.gaia_stack("../cluster_data/NGC6397_fine_isochrone.csv")
 t1 = time.time()
 
 # print timing information
 print("created isochrone in", t1-t0, "seconds")
 
 # Show plot and save plot
-plotter.save(image_name="isochrone_for_presentation")
+# plotter.save(image_name="isochrone_for_presentation")
 # plotter.save(image_name="gaia+mesa")
 
-plotter.show()
+plotter.show_clean()
+# plotter.show()
