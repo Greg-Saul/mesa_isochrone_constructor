@@ -10,6 +10,10 @@ import sys
 import shutil
 import mplcursors
 import time
+import cv2
+from PIL import Image
+import tkinter as tk
+from tkinter import filedialog
 
 matplotlib.use('TkAgg')
 
@@ -69,6 +73,7 @@ class mesa_isochrone:
         self.temperatures = []
         self.ages = []
         self.masses = []
+        self.eliza = False
         if filename.endswith(".json"):
             with open(filename, "r") as file:
                 star_data = json.load(file)
@@ -76,6 +81,13 @@ class mesa_isochrone:
             self.temperatures = star_data["temp"]
             self.ages = star_data["ages"]
             self.masses = star_data["masses"]
+        elif filename.endswith(".eliza"):
+            df = pd.read_csv(filename)
+            self.temperatures = df["Temperature"]
+            self.luminosities = df["Luminosity"]
+            self.masses = df["Mass"]
+            self.ages = df["age"]
+            self.eliza = True
         elif os.path.isdir(filename):
             files = os.listdir(filename)
             if files[0].endswith(".csv"):
@@ -126,8 +138,9 @@ class mesa_isochrone:
         tolerance = kwargs.get("tolerance", 10)
         show_hr = kwargs.get("show_hr", True)
         show_points = kwargs.get("show_points", False)
-        interp = kwargs.get("interpolation_method", "cubic_spline")
+        interp = kwargs.get("interpolation_method", "PCHIP")
         clean = kwargs.get("clean", False)
+        reinterp = kwargs.get("reinterpolate", True)
 
         self.extract_file(filename)
 
@@ -135,13 +148,20 @@ class mesa_isochrone:
         new_lums = []
         masses_used = []
         for i in range(len(self.ages)):
-            indices = self.__find_closest_age_index(self.ages[i], desired_age)
-            if indices[2] < tolerance:
-                new_temps.append(self.temperatures[i][indices[1]])
-                new_lums.append(self.luminosities[i][indices[1]])
-                masses_used.append(self.masses[i])
-                if show_hr:
-                    self.ax.plot(self.temperatures[i], self.luminosities[i], color='grey')
+            if not self.eliza and not reinterp:
+                indices = self.__find_closest_age_index(self.ages[i], desired_age)
+                if indices[2] < tolerance:
+                    new_temps.append(self.temperatures[i][indices[1]])
+                    new_lums.append(self.luminosities[i][indices[1]])
+                    masses_used.append(self.masses[i])
+                    if show_hr:
+                        self.ax.plot(self.temperatures[i], self.luminosities[i], color='grey')
+            elif not self.eliza and reinterp:
+                new_temps, new_lums, masses_used = self.find_reinterpolation(desired_age)
+            else:
+                new_temps = self.temperatures
+                new_lums = self.luminosities
+                masses_used = self.masses
         t = np.arange(len(new_temps))
         t_fine = np.linspace(0, len(new_temps) - 1, resolution)
         if interp == "cubic_spline":
@@ -152,7 +172,8 @@ class mesa_isochrone:
             lum = PchipInterpolator(t, new_lums)
         elif interp == "linear":
             self.ax.plot(new_temps, new_lums, linestyle='--', 
-            color=track_color, label= "age (years): " + "{:,}".format(desired_age))
+            color=track_color, 
+            label="age (years): {:.3e}".format(desired_age))
             if show_points:
                 self.ax.plot(new_temps, new_lums, 'ko')
         elif interp == "make_interp_spline":
@@ -165,10 +186,13 @@ class mesa_isochrone:
             self.temp_smooth = temp(t_fine)
             self.lum_smooth = lum(t_fine)
             if clean == False:
-                self.ax.plot(self.temp_smooth, self.lum_smooth, color=track_color, label= "age (years): " + "{:,}".format(desired_age))
+                self.ax.plot(self.temp_smooth, self.lum_smooth, 
+                color=track_color, 
+                label="age (years): {:.1e}".format(desired_age))
             if clean == True:
                 self.ax.axis("off")
-                self.ax.plot(self.temp_smooth, self.lum_smooth, color="k")
+                self.ax.plot(self.temp_smooth, self.lum_smooth, linewidth=0.1, color="k")
+                # self.fig.tight_layout
             if show_points:
                 sc = self.ax.plot(new_temps, new_lums, 'ko')
                 # print("Masses for plotted points:", masses_used)
@@ -180,34 +204,87 @@ class mesa_isochrone:
                 ))
             
 
+    def find_reinterpolation(self, desired_age):
+        new_temps = []
+        new_lums = []
+        masses_used = []
+
+        for i in range(len(self.ages)):
+            ages = self.ages[i]
+            if desired_age < ages[0] or desired_age > ages[-1]:
+                continue
+
+            for j in range(len(ages) - 1):
+                if ages[j] <= desired_age <= ages[j + 1]:
+                    idx1 = j
+                    idx2 = j + 1
+                    break
+
+            age0 = ages[j]
+            age1 = ages[j + 1]
+
+            t0 = self.temperatures[i][idx1]
+            t1 = self.temperatures[i][idx2]
+
+            l0 = self.luminosities[i][idx1]
+            l1 = self.luminosities[i][idx2]
+
+            w = (desired_age - age0) / (age1 - age0)
+
+            interp_temp = t0 + w * (t1 - t0)
+            interp_lum  = l0 + w * (l1 - l0)
+
+            new_temps.append(interp_temp)
+            new_lums.append(interp_lum)
+            masses_used.append(self.masses[i])
+
+        return new_temps, new_lums, masses_used
+
     def show(self):
         self.ax.set_xlabel(r'$\log T_{\mathrm{eff}}$ [K]')
         self.ax.set_ylabel(r'$\log L\ [L_\odot]$')
-        self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
+        # self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
         self.ax.legend(loc="lower right", fontsize=10)
         self.ax.grid(True, linestyle='--', alpha=0.7)
         plt.show()
 
     def show_clean(self):
+        plt.savefig("clean.png")
         plt.show()
 
     def gaia_stack(self, filename1):
         df = pd.read_csv(filename1)
         df.dropna(inplace=True)
         df.reset_index(drop=True, inplace=True)
-        self.ax.plot(df['x_back'], df['y_back'], color='black')
-        # self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='grey'
-        print(df['x_back'][0], df['y_back'][0])
-        print(self.temp_smooth[0], self.lum_smooth[0])
 
-        self.ax.plot([df['x_back'][0], self.temp_smooth[0]],
-         [df['y_back'][0], self.lum_smooth[0]],
-          color='k'
+        max_index_gaia = df.x_back.argmax()
+        max_index_mesa = np.argmax(self.temp_smooth)
+
+
+        self.x_change = self.temp_smooth[max_index_mesa] - df.x_back[max_index_gaia]
+        self.y_change = self.lum_smooth[max_index_mesa] - df.y_back[max_index_gaia]
+
+        self.ax.plot(df['x_back'] + self.x_change, df['y_back'] + self.y_change, color='k',
+          linewidth=0.1,linestyle='solid')
+        ###########################################################################
+        # self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='blue')
+        ###########################################################################
+        # print(df['x_back'][0], df['y_back'][0])
+        # print(self.temp_smooth[0], self.lum_smooth[0])
+
+
+        self.ax.plot([df['x_back'][0] + self.x_change, self.temp_smooth[0]],
+         [df['y_back'][0] + self.y_change, self.lum_smooth[0]],
+          color='k',
+          linewidth=0.1,
+          linestyle='solid'
         )
         self.ax.plot(
-            [df['x_back'].iloc[-1], self.temp_smooth[-1]],
-            [df['y_back'].iloc[-1], self.lum_smooth[-1]],
-            color='k'
+            [df['x_back'].iloc[-1] + self.x_change, self.temp_smooth[-1]],
+            [df['y_back'].iloc[-1] + self.y_change, self.lum_smooth[-1]],
+            color='k',
+            linewidth=0.1,
+            linestyle='solid'
         )
 
     def save(self, **kwargs):
@@ -250,3 +327,73 @@ class mesa_isochrone:
             <string>image_name - *"isochrone_diagram"*''')
         print('''- sort_by_mass_key
             example usage: <list>file_paths = sorted(<list>file_paths, key=plotter.sort_by_mass_key)''')
+
+    def temp(self, filename):
+        im = Image.open(filename)
+        pixels = im.load()
+        w, h = im.size
+
+        fill = False
+
+        for i in range(w):
+            for j in range(h):
+                print("")
+
+    def fill(self, title):
+        img = cv2.imread("clean.png")
+        h, w = img.shape[:2]
+        mask = np.zeros((h+2, w+2), np.uint8)
+
+        cv2.floodFill(img, mask, (1,1), (0,0,255))  # fill from a guaranteed-white point
+
+        cv2.imwrite("filled.png", img)
+
+        im = Image.open('filled.png')
+        pixels = im.load()
+        w, h = im.size
+
+        fill = False
+
+        im = Image.open("filled.png").convert("RGB")
+        pixels = im.load()
+        w, h = im.size
+
+        for i in range(w):
+            for j in range(h):
+                if pixels[i, j] != (255, 255, 255):
+                    pixels[i, j] = (0, 0, 0)
+
+        im.save("filled.png")
+
+
+        count = 0
+
+
+        for i in range(w):
+            for j in range(h):
+                if pixels[i,j] != (0,0,0):
+                    count += 1
+
+        # print(count)
+        f = open(f"{title}.txt", "w")
+        f.write(f'''{title} insert unit here
+        x translation: {self.x_change}
+        y translation: {self.y_change}
+        difference: {count} pixels
+        unit: ({count}, {self.x_change}, {self.y_change})
+        ''')
+        f.close()
+
+    def select_files(self):
+
+        root = tk.Tk()
+        root.withdraw()
+
+        file_paths = filedialog.askopenfilenames(
+            title="Select MESA Files"
+        )
+        file_paths = list(file_paths)
+
+        file_paths = sorted(file_paths, key=self.sort_by_mass_key)
+
+        return file_paths
