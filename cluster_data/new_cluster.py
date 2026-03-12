@@ -72,7 +72,7 @@ class Collection:
         df = df.sort_values("y_new")
 
         # bins = [11.5, 12.5, 13.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5, 21]
-        bins = np.linspace(df.y_new.min() + 1.2, df.y_new.max() - 1, 12)
+        bins = np.linspace(df.y_new.min() + 1.2, df.y_new.max() - 1, 10)
         print(bins)
         bin_labels = [str(b) for b in bins[:-1]]
         df["bin"] = pd.cut(df["y_new"], bins=bins, labels=bin_labels, right=False)
@@ -164,7 +164,7 @@ class Collection:
 
         # ax.scatter(df['bp_rp'], df['phot_g_mean_mag'], s=s, color='grey', alpha=alpha)
         ax.invert_xaxis()
-        # ax.scatter(df['log_teff_back'], df['log_L_back'], s=s)
+        # ax.scatter(df['x_back'], df['y_back'], s=s)
         ax.plot(df['x_back'], df['y_back'], color='darkorange', lw=2)
         # ax.plot(df['log_teff'], df['log_L'])
         # ax.invert_yaxis()
@@ -173,7 +173,7 @@ class Collection:
 
         # plt.savefig("save.png")
 
-        # plt.scatter(calculate_teff(df.bp_rp), compute_log_luminosity(df.phot_g_mean_mag, df.parallax), s=s, c='grey', alpha=alpha)
+        plt.scatter(calculate_teff(df.bp_rp), compute_log_luminosity(df.phot_g_mean_mag, df.parallax), s=s, c='grey', alpha=alpha)
         plt.show()
 
     def proper_motion_cuts(self, in_file):
@@ -208,6 +208,6 @@ class Collection:
 
 
 n = Collection()
-n.proper_motion_cuts("clustercsv/rawM92.csv")
+# n.proper_motion_cuts("clustercsv/rawM92.csv")
 # n.cluster_query()
-# n.plot_cluster()
+n.plot_cluster()

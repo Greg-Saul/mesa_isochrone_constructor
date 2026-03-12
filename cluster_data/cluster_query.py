@@ -78,6 +78,6 @@ plt.scatter(df.bp_rp, df.phot_g_mean_mag, s=5, color="gray")
 print(len(df.bp_rp))
 
 output_file = "NGC6397_gaia_data.csv"
-df[["bp_rp", "phot_g_mean_mag", "parallax"]].to_csv(output_file, index=False)
+df[["ra", "dec", "bp_rp", "phot_g_mean_mag", "parallax"]].to_csv(output_file, index=False)
 
 # plt.show()

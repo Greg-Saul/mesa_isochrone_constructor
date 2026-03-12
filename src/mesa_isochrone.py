@@ -211,8 +211,6 @@ class mesa_isochrone:
 
         for i in range(len(self.ages)):
             ages = self.ages[i]
-            if desired_age < ages[0] or desired_age > ages[-1]:
-                continue
 
             for j in range(len(ages) - 1):
                 if ages[j] <= desired_age <= ages[j + 1]:
@@ -223,16 +221,16 @@ class mesa_isochrone:
             age0 = ages[j]
             age1 = ages[j + 1]
 
-            t0 = self.temperatures[i][idx1]
-            t1 = self.temperatures[i][idx2]
+            t1 = self.temperatures[i][idx1]
+            t2 = self.temperatures[i][idx2]
 
-            l0 = self.luminosities[i][idx1]
-            l1 = self.luminosities[i][idx2]
+            l1 = self.luminosities[i][idx1]
+            l2 = self.luminosities[i][idx2]
 
             w = (desired_age - age0) / (age1 - age0)
 
-            interp_temp = t0 + w * (t1 - t0)
-            interp_lum  = l0 + w * (l1 - l0)
+            interp_temp = t1 + w * (t2 - t1)
+            interp_lum  = l1 + w * (l2 - l1)
 
             new_temps.append(interp_temp)
             new_lums.append(interp_lum)
@@ -252,40 +250,45 @@ class mesa_isochrone:
         plt.savefig("clean.png")
         plt.show()
 
-    def gaia_stack(self, filename1):
+    def gaia_stack(self, filename1, clean=False):
         df = pd.read_csv(filename1)
         df.dropna(inplace=True)
         df.reset_index(drop=True, inplace=True)
 
-        max_index_gaia = df.x_back.argmax()
-        max_index_mesa = np.argmax(self.temp_smooth)
+        if clean:
+            # self.fig.tight_layout()
+            self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            max_index_gaia = df.x_back.argmax()
+            max_index_mesa = np.argmax(self.temp_smooth)
 
 
-        self.x_change = self.temp_smooth[max_index_mesa] - df.x_back[max_index_gaia]
-        self.y_change = self.lum_smooth[max_index_mesa] - df.y_back[max_index_gaia]
+            self.x_change = self.temp_smooth[max_index_mesa] - df.x_back[max_index_gaia]
+            self.y_change = self.lum_smooth[max_index_mesa] - df.y_back[max_index_gaia]
 
-        self.ax.plot(df['x_back'] + self.x_change, df['y_back'] + self.y_change, color='k',
-          linewidth=0.1,linestyle='solid')
-        ###########################################################################
-        # self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='blue')
-        ###########################################################################
-        # print(df['x_back'][0], df['y_back'][0])
-        # print(self.temp_smooth[0], self.lum_smooth[0])
+            self.ax.plot(df['x_back'] + self.x_change, df['y_back'] + self.y_change, color='k',
+            linewidth=0.1,linestyle='solid')
+            ##########################################################################
+            # self.ax.scatter(df['log_Teff'], df['log_L'], s=3, color='blue')
+            ##########################################################################
+            # print(df['x_back'][0], df['y_back'][0])
+            # print(self.temp_smooth[0], self.lum_smooth[0])
 
 
-        self.ax.plot([df['x_back'][0] + self.x_change, self.temp_smooth[0]],
-         [df['y_back'][0] + self.y_change, self.lum_smooth[0]],
-          color='k',
-          linewidth=0.1,
-          linestyle='solid'
-        )
-        self.ax.plot(
-            [df['x_back'].iloc[-1] + self.x_change, self.temp_smooth[-1]],
-            [df['y_back'].iloc[-1] + self.y_change, self.lum_smooth[-1]],
+            self.ax.plot([df['x_back'][0] + self.x_change, self.temp_smooth[0]],
+            [df['y_back'][0] + self.y_change, self.lum_smooth[0]],
             color='k',
             linewidth=0.1,
             linestyle='solid'
-        )
+            )
+            self.ax.plot(
+                [df['x_back'].iloc[-1] + self.x_change, self.temp_smooth[-1]],
+                [df['y_back'].iloc[-1] + self.y_change, self.lum_smooth[-1]],
+                color='k',
+                linewidth=0.1,
+                linestyle='solid'
+            )
+        else:
+            self.ax.plot(df['x_back'], df['y_back'])
 
     def save(self, **kwargs):
         image_name = kwargs.get("image_name", "isochrone_diagram")
@@ -293,6 +296,7 @@ class mesa_isochrone:
         self.ax.set_ylabel(r'$\log L\ [L_\odot]$')
         self.ax.set_title('Luminosity vs. Temperature', fontsize=16)
         self.ax.grid(True, linestyle='--', alpha=0.7)
+        self.ax.legend(loc="lower right", fontsize=10)
         plt.savefig(image_name + ".png")
 
     def __find_closest_age_index(self, age_array, desired_age):

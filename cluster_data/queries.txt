@@ -1,0 +1,27 @@
+M92
+
+SELECT TOP 50000 
+g.source_id, 
+g.ra, 
+g.dec, 
+g.pmra, 
+g.pmdec, 
+g.parallax, 
+g.phot_g_mean_mag, 
+g.bp_rp 
+FROM gaiadr3.gaia_source AS g WHERE 
+CONTAINS( 
+    POINT('ICRS', g.ra, g.dec), 
+    CIRCLE('ICRS', 259.280, 43.136, 0.2) 
+    ) = 1
+AND g.parallax BETWEEN 0.05 AND 0.25
+AND g.phot_g_mean_mag < 20
+
+=================================================
+Variable stars
+
+SELECT source_id, ra, dec, variability_type, period, amplitude
+FROM gaiadr3.vari_variable
+WHERE variability_type IN ('Cepheid', 'RR Lyrae', 'Eclipsing', 'Rotating')
+ORDER BY period ASC
+LIMIT 100;
