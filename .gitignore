@@ -6,3 +6,5 @@
 /cluster_data/dustmap/dustmaps/*
 /usage
 /gaia_ridgeline
+*.h5
+*.zip
