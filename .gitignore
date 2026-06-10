@@ -2,6 +2,8 @@
 *.png
 *.json
 *.data
+*.eliza
+*.parquet
 *.txt
 /cluster_data/dustmap/dustmaps/*
 /usage
