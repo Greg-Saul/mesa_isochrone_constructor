@@ -1,81 +1,167 @@
-# py_mesa_interpolation
+# mesa_isochrone_constructor
 
-```py_mesa_interpolation``` is a tool that is designed to be used with [py_mesa_reader](https://github.com/wmwolf/py_mesa_reader) and [MESA stellar astrophysics program](https://docs.mesastar.org/en/latest/) to create isochrone plots over multiple tracks.
+`mesa_isochrone_constructor` is a Python library for generating stellar isochrones from multiple MESA evolutionary tracks. It is designed to work alongside MESA and py_mesa_reader, allowing users to construct smooth isochrones, visualize evolutionary tracks, and export model data in multiple formats.
 
-### dependencies:
+## Features
+
+- Generate isochrones from collections of MESA stellar evolution tracks
+- Plot evolutionary tracks on HR diagrams
+- Interpolate stellar properties at arbitrary ages
+- Export datasets to JSON, CSV, Parquet, and FITS formats
+- Multiple interpolation methods:
+  - Linear
+  - PCHIP (default)
+  - Cubic Spline
+  - Akima
+  - make_interp_spline
+- Interactive mass inspection using mplcursors
+
+## Dependencies
+
 - py_mesa_reader
-- pandas
 - numpy
+- pandas
 - matplotlib
 - scipy
+- astropy
+- pyarrow
+- mplcursors
 
-### installation directions (in terminal):
+Install with:
 
-1) check dependencies and make sure they are all properly installed
-2) ```git clone https://github.com/Greg-Saul/mesa_isochrone_constructor.git```
-3) ```cd mesa_isochrone_constructor/src```
-4) ```python3 main_sample1.py```
-5) ```python3 main_sample2.py```
-6) if these run and pop up an isochrone, mesa_isochrone_constructor is properly installed and ready for use
-
-
-### functions:
+```bash
+pip install numpy pandas matplotlib scipy astropy pyarrow mplcursors
 ```
-load_models(mesa_data) # takes a 2d array of mesa data
-md_to_csv(foldername) # turns relevant mesa data objects into csv files inside a folder
-extract_csv(foldername) # loads the csv data from foldername to be used in isochrone generation
-plot_isochrone(desired_age) # plots an isochrone of a desired year over a hr diagram
-plot_evolutionary_tracks() # plots a colorful hr diagram
-show() # shows the plot that has been created
-save(imagename) # save plot to imagename.png
+
+## Installation
+
+```bash
+git clone https://github.com/Greg-Saul/mesa_isochrone_constructor.git
+cd mesa_isochrone_constructor/src
 ```
-<strong>Optional flags for ```plot_isochrone()```</strong><br>
 
-defaults are shown:
-- change color of isochrone track: ```track_color='red'```
-- change number of points in the graph: ```resolution=100```
-- change % difference from desired age allowed: ```tolerance=10```
-- show hr tracks behind isochrones: ```show_hr=True```
-- show points from mesa data: ```show_points=False```
+## Basic Usage
 
-<strong>Optional flags for ```save()```</strong><br>
+### Load MESA Models
 
-defaults are shown:
- - set image name: ```image_name="isochrone_diagram"```
+```python
+from mesa_isochrone import mesa_isochrone
 
-### Sample usage
+plotter = mesa_isochrone()
+plotter.load_models(model_data)
+```
 
-<strong>Please see:</strong>
-- main_sample1.py (generates csv files from mesa data objects)
-- main_sample2.py (generates isochrones from csv files created in main_sample1.py)
-- main_sample3.py (generates isochrones directly from mesa data objects)
+`model_data` should be a list of py_mesa_reader `MesaData` objects.
 
-### Interpolation algorithm
+### Export Data
 
-To solve the non-monoticity problem, we must find a polynomial function:<br>
-$P:P(t) = (x(t), y(t)) \textrm{ where } x(t) \textrm{ is log temperature, } y(t) \textrm{ is log luminocity, and }$ <br>
-$t \textrm{ is a time parameter where } t = [0, ..., n-1]$
+```python
+plotter.export("models", file_type="json")
+```
 
-$n = \lvert \textrm{log effective temperature} \rvert = \lvert \textrm{log luminosity} \rvert = \lvert t \rvert = \text{number of tracks}$
+Supported formats:
 
-$i = [0, ..., \text{ desired resolution}]$
+- `"json"`
+- `"csv"`
+- `"parquet"`
+- `"fits"`
 
-$\Rightarrow \exists \textrm{ cubic spline functions } x_\text{teff}(i) \textrm{ and } y_\text{logL}(i) : P_\text{isochrone}(i) = (x_\text{teff}(i), y_\text{logL}(i))$
+### Plot an Isochrone
 
+```python
+plotter.plot_isochrone(
+    filename="models.json",
+    desired_age=1e9
+)
+```
 
+### Plot Evolutionary Tracks
 
+```python
+plotter.plot_evolutionary_tracks()
+```
 
+### Display Plot
 
+```python
+plotter.show()
+```
 
+### Save Plot
 
+```python
+plotter.save(image_name="my_isochrone")
+```
 
+## plot_isochrone Parameters
 
+| Parameter | Default | Description |
+|------------|----------|-------------|
+| track_color | `"red"` | Isochrone color |
+| resolution | `10000` | Number of interpolated points |
+| tolerance | `1` | Allowed age mismatch (%) |
+| show_hr | `False` | Plot evolutionary tracks behind isochrone |
+| show_points | `False` | Display original interpolation points |
+| interpolation_method | `"PCHIP"` | Smoothing method |
+| clean | `False` | Produce minimal image without labels |
+| reinterpolate | `True` | Interpolate along stellar tracks to desired age |
+| legend_type | `1` | Legend formatting style |
 
+Supported interpolation methods:
 
+```python
+interpolation_method="linear"
+interpolation_method="PCHIP"
+interpolation_method="cubic_spline"
+interpolation_method="akima"
+interpolation_method="make_interp_spline"
+```
 
+## Reinterpolation Algorithm
 
+For each stellar track, the code locates the two evolutionary points that bracket the desired age:
 
+```math
+age_0 \le age_{desired} \le age_1
+```
 
+The corresponding temperature and luminosity values are then linearly interpolated:
 
+```math
+w = \frac{age_{desired} - age_0}{age_1 - age_0}
+```
 
+```math
+T = T_0 + w(T_1 - T_0)
+```
 
+```math
+L = L_0 + w(L_1 - L_0)
+```
+
+This produces a set of temperature-luminosity pairs representing stars of different masses at a common age.
+
+A second interpolation step is then applied across mass tracks to construct a smooth isochrone curve in HR space.
+
+## Example Workflow
+
+```python
+plotter = mesa_isochrone()
+
+plotter.load_models(model_data)
+
+plotter.export("tracks", file_type="json")
+
+plotter.plot_isochrone(
+    "tracks.json",
+    desired_age=5e9,
+    interpolation_method="PCHIP",
+    show_hr=True
+)
+
+plotter.show()
+```
+
+## License
+
+MIT License
